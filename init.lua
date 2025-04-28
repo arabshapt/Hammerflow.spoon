@@ -273,6 +273,8 @@ function obj.loadFirstValidTomlFile(paths)
   if configFile.show_ui == false then
     spoon.RecursiveBinder.showBindHelper = false
   end
+  -- Set exit_overlay_with_leader option
+  spoon.RecursiveBinder.exitWithLeader = configFile.exit_overlay_with_leader or false
 
   -- clear settings from table so we don't have to account
   -- for them in the recursive processing function
@@ -281,6 +283,7 @@ function obj.loadFirstValidTomlFile(paths)
   configFile.auto_reload = nil
   configFile.toast_on_reload = nil
   configFile.show_ui = nil
+  configFile.exit_overlay_with_leader = nil
 
   local function parseKeyMap(config)
     local keyMap = {}
@@ -358,7 +361,7 @@ function obj.loadFirstValidTomlFile(paths)
   end
 
   local keys = parseKeyMap(configFile)
-  hs.hotkey.bind(leader_key_mods, leader_key, spoon.RecursiveBinder.recursiveBind(keys))
+  hs.hotkey.bind(leader_key_mods, leader_key, spoon.RecursiveBinder.recursiveBind(keys, nil, {mods = leader_key_mods, key = leader_key}))
 end
 
 function obj.registerFunctions(...)

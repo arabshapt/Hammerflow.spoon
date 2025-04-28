@@ -22,6 +22,11 @@ obj.license = "MIT - https://opensource.org/licenses/MIT"
 --- key to abort, default to {keyNone, 'escape'}
 obj.escapeKey = {keyNone, 'escape'}
 
+--- RecursiveBinder.exitWithLeader
+--- Variable
+--- whether to exit overlay when the leader key is pressed again, default to false
+obj.exitWithLeader = false
+
 --- RecursiveBinder.helperEntryEachLine
 --- Variable
 --- Number of entries each line of helper. Default to 5.
@@ -253,6 +258,8 @@ end
 ---
 --- Parameters:
 ---  * keymap - A table that specifies the mapping.
+---  * modals - (Optional) A table to store created modal objects.
+---  * leaderKey - (Optional) A table with mods and key of the leader key for exiting with leader key.
 ---
 --- Returns:
 ---  * A function to start. Bind it to a initial key binding.
@@ -268,7 +275,7 @@ end
 ---    And the table have the same format of top table: keys to keys, value to table or function
 
 -- the actual binding function
-function obj.recursiveBind(keymap, modals)
+function obj.recursiveBind(keymap, modals, leaderKey)
    if not modals then modals = {} end
    if type(keymap) == 'function' then
       -- in this case "keymap" is actuall a function
@@ -278,7 +285,7 @@ function obj.recursiveBind(keymap, modals)
    table.insert(modals, modal)
    local keyFuncNameTable = {}
    for key, map in pairs(keymap) do
-      local func = obj.recursiveBind(map, modals)
+      local func = obj.recursiveBind(map, modals, leaderKey)
       -- key[1] is modifiers, i.e. {'shift'}, key[2] is key, i.e. 'f' 
       modal:bind(key[1], key[2], function() modal:exit() killHelper() func() end)
       modal:bind(obj.escapeKey[1], obj.escapeKey[2], function() modal:exit() killHelper() end)
@@ -293,6 +300,12 @@ function obj.recursiveBind(keymap, modals)
       end
       modal:enter()
       killHelper()
+      
+      -- Bind leader key to exit if exitWithLeader is enabled
+      if obj.exitWithLeader and leaderKey then
+         modal:bind(leaderKey.mods, leaderKey.key, function() modal:exit() killHelper() end)
+      end
+      
       if obj.showBindHelper then
          showHelper(keyFuncNameTable)
       end
