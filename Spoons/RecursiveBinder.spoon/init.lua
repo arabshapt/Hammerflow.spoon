@@ -54,6 +54,11 @@ obj.helperFormat = {atScreenEdge=2,
 --- whether to show helper, can be true of false
 obj.showBindHelper = true
 
+--- RecursiveBinder.stealthMode
+--- Variable
+--- whether to disable helper alerts completely, default to false
+obj.stealthMode = false
+
 --- RecursiveBinder.helperModifierMapping()
 --- Variable
 --- The mapping used to display modifiers on helper.
@@ -217,6 +222,10 @@ local function showHelper(keyFuncNameTable)
    local lastLine = ''
    local count = 0
 
+   if obj.stealthMode then
+      return -- Don't show helper in stealth mode
+   end
+
    local sortedKeyFuncNameTable = {}
    for keyName, funcName in pairs(keyFuncNameTable) do
        table.insert(sortedKeyFuncNameTable, {keyName = keyName, funcName = funcName})
@@ -249,7 +258,10 @@ local function showHelper(keyFuncNameTable)
 end
 
 local function killHelper()
-   hs.alert.closeSpecific(previousHelperID)
+   if previousHelperID then
+      hs.alert.closeSpecific(previousHelperID)
+      previousHelperID = nil -- Reset the ID after closing
+   end
 end
 
 --- RecursiveBinder.recursiveBind(keymap)
@@ -306,7 +318,7 @@ function obj.recursiveBind(keymap, modals, leaderKey)
          modal:bind(leaderKey.mods, leaderKey.key, function() modal:exit() killHelper() end)
       end
       
-      if obj.showBindHelper then
+      if obj.showBindHelper and not obj.stealthMode then
          showHelper(keyFuncNameTable)
       end
    end

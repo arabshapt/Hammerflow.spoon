@@ -169,6 +169,18 @@ local function postfix(s)
 end
 
 local function getActionAndLabel(s)
+  -- Add check for boolean type
+  if type(s) == "boolean" then
+    hs.alert(string.format("Hammerflow Config Error: Expected an action string (like \"cmd:ls\" or \"http://...\") but received a boolean value (%s). Check your TOML configuration for keys assigned to true/false where an action is expected (e.g., in arrays [true, \"label\"] or conditional keys key_cond = true).", tostring(s)), 5)
+    error(string.format("Invalid boolean value passed to getActionAndLabel: %s", tostring(s)))
+  end
+  
+  if type(s) ~= "string" then
+     -- Add a generic check for non-strings as well, just in case
+     hs.alert(string.format("Hammerflow Config Error: Expected an action string but received type '%s' with value '%s'. Check your TOML configuration.", type(s), tostring(s)), 5)
+     error(string.format("Invalid type '%s' passed to getActionAndLabel, expected string.", type(s)))
+  end
+
   if s:find("^http[s]?://") then
     return open(s), s:sub(5, 5) == "s" and s:sub(9) or s:sub(8)
   elseif s == "reload" then
@@ -275,6 +287,10 @@ function obj.loadFirstValidTomlFile(paths)
   end
   -- Set exit_overlay_with_leader option
   spoon.RecursiveBinder.exitWithLeader = configFile.exit_overlay_with_leader or false
+  -- Set stealth_mode option
+  if configFile.stealth_mode == true then
+    spoon.RecursiveBinder.stealthMode = true
+  end
 
   -- clear settings from table so we don't have to account
   -- for them in the recursive processing function
@@ -284,6 +300,7 @@ function obj.loadFirstValidTomlFile(paths)
   configFile.toast_on_reload = nil
   configFile.show_ui = nil
   configFile.exit_overlay_with_leader = nil
+  configFile.stealth_mode = nil -- Clear the stealth_mode setting as well
 
   local function parseKeyMap(config)
     local keyMap = {}
@@ -314,6 +331,11 @@ function obj.loadFirstValidTomlFile(paths)
       elseif type(v) == "table" and v[1] then
         local action, defaultLabel = getActionAndLabel(v[1])
         keyMap[singleKey(k, v[2] or defaultLabel)] = action
+      elseif type(v) == "boolean" then
+        hs.alert(string.format("Hammerflow Config Error: Key '%s' has a boolean value (%s), which is not allowed. It must be an action string, an array [\"action\", \"label\"], or a sub-table.", k, tostring(v)), 5)
+        -- Optionally, you could return an empty table or skip this key to allow partial loading
+        -- return {}
+        error(string.format("Invalid boolean value for key '%s' in Hammerflow config")) -- Stop processing
       else
         keyMap[singleKey(k, v.label or k)] = parseKeyMap(v)
       end

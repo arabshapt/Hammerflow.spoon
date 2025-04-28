@@ -7,9 +7,9 @@
 # want different profile names, you can add it
 # to the list in ~/.hammerspoon/init.lua. 
 #################################################
-
-# settings
-leader_key = "f9"        # required, the leader key that starts the sequence
+    stealth_mode = true
+    # settings
+leader_key = "f10"        # required, the leader key that starts the sequence
 leader_key_mods = "cmd ctrl alt"     # optional, default "", not recommended - a dedicated leader key is better
                              # supports cmd ctrl alt shift
 auto_reload = true        # optional, default true, reload when any file in this directory is saved
